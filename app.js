@@ -133,8 +133,9 @@ function observeFade() {
 
 function renderRows() {
   const counts = {};
-  notes.filter(n => !n.deletedAt).forEach(n => { const k = gyouOf(n); counts[k] = (counts[k] || 0) + 1; });
-  const total = notes.filter(n => !n.deletedAt).length;
+  const pool = notes.filter(n => showTrash ? !!n.deletedAt : !n.deletedAt); // ゴミ箱表示中はゴミ箱の分だけ数える
+  pool.forEach(n => { const k = gyouOf(n); counts[k] = (counts[k] || 0) + 1; });
+  const total = pool.length;
   const chips = [`<button class="row-chip ${filter === "all" ? "active" : ""}" data-k="all" style="background:#2b2340;color:#fff">ぜんぶ<small>${total}</small></button>`];
   GYOU.forEach(g => {
     chips.push(`<button class="row-chip ${filter === g.k ? "active" : ""}" data-k="${g.k}" style="background:${g.color};color:#fff">${g.k}${g.k === "他" ? "" : "行"}${counts[g.k] ? `<small>${counts[g.k]}</small>` : ""}</button>`);
