@@ -87,7 +87,20 @@
       </select>
     </label>
     <div class="row-item col">
-      <b>バックアップ</b>
+      <b>☁️ 自動バックアップ <span id="cloudBadge"></span></b>
+      <small>ログインしておくと、メモを書くたびに自動でクラウドに保存されます。iPhoneが壊れても、ログインすれば元に戻ります。</small>
+      <div id="cloudOff" class="cloud-form">
+        <input id="cloudEmail" type="email" placeholder="メールアドレス" autocomplete="email" autocapitalize="off">
+        <input id="cloudPw" type="password" placeholder="パスワード（8文字以上）" autocomplete="current-password">
+        <div class="btn-line"><button class="pill-btn" id="btnLogin">ログイン</button><button class="pill-btn" id="btnSignup">はじめて（新規登録）</button></div>
+      </div>
+      <div id="cloudOn" hidden>
+        <small id="cloudInfo"></small>
+        <div class="btn-line"><button class="pill-btn" id="btnSyncNow">いますぐ同期</button><button class="pill-btn" id="btnLogout">OFFにする</button></div>
+      </div>
+    </div>
+    <div class="row-item col">
+      <b>手動バックアップ（おまけ）</b>
       <small>iPhoneは長期間でデータが消える場合があります。ときどき書き出してね。</small>
       <div class="btn-line">
         <button class="pill-btn" id="btnExport">書き出し</button>
@@ -104,5 +117,6 @@
 <div id="viewer" class="viewer" hidden><button class="pill-btn" id="viewerClose">とじる ✕</button><img id="viewerImg" alt=""></div>
 
 <script src="app.js"></script>
+<script src="sync.js"></script>
 </body>
 </html>

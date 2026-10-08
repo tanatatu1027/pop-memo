@@ -185,7 +185,7 @@ async function reload() { notes = await dbAll(); render(); }
 // 30日経ったゴミ箱を整理
 async function purgeTrash() {
   const lim = Date.now() - 30 * 864e5;
-  for (const n of notes) if (n.deletedAt && n.deletedAt < lim) await dbDel(n.id);
+  for (const n of notes) if (n.deletedAt && n.deletedAt < lim) { await dbDel(n.id); window.Sync?.forget(n.id); }
 }
 
 // ---------- 編集 ----------
@@ -240,8 +240,8 @@ function commit(n = cur, isNew = curIsNew) {
   const empty = !n.title && !n.text.trim() && !n.checks.length && !(n.atts || []).length;
   saveQ = saveQ.then(async () => {
     try {
-      if (empty) { if (!isNew || n.saved) await dbDel(n.id); n.saved = false; }
-      else { n.updated = Date.now(); await dbPut(n); n.saved = true; if (n === cur) curIsNew = false; }
+      if (empty) { if (!isNew || n.saved) { await dbDel(n.id); window.Sync?.forget(n.id); } n.saved = false; }
+      else { n.updated = Date.now(); await dbPut(n); n.saved = true; if (n === cur) curIsNew = false; window.Sync?.notify(n.id); }
     } catch { toast("保存に失敗しました。容量がいっぱいかもしれません"); }
   });
   return saveQ;
@@ -269,8 +269,8 @@ let pdfjsP;
 function loadPdfJs() {
   if (!pdfjsP) pdfjsP = new Promise((res, rej) => {
     const s = document.createElement("script");
-    s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
-    s.onload = () => { pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; res(pdfjsLib); };
+    s.src = "vendor/pdf.min.js";
+    s.onload = () => { pdfjsLib.GlobalWorkerOptions.workerSrc = "vendor/pdf.worker.min.js"; res(pdfjsLib); };
     s.onerror = rej; document.head.appendChild(s);
   });
   return pdfjsP;
@@ -334,6 +334,21 @@ function toggleMic() {
   rec.start(); $("tMic").classList.add("rec"); toast("聞いてるよ… もう一度押すと止まります");
 }
 
+// ---------- 外部から来たメモの検証（バックアップ読み込み／クラウド受信で共用） ----------
+const SAFE_ID = /^[\w-]{1,64}$/;
+function sanitizeNote(n, forceId) {
+  const num = v => (Number.isFinite(+v) ? +v : Date.now());
+  const id = String(forceId ?? n.id ?? "").replace(/[^\w-]/g, "").slice(0, 64) || uid();
+  const str = v => (typeof v === "string" ? v : "");
+  return {
+    id, title: str(n.title), yomi: str(n.yomi), text: str(n.text), color: safeColor(n.color), pinned: !!n.pinned,
+    checks: (Array.isArray(n.checks) ? n.checks : []).filter(c => c && typeof c === "object").map(c => ({ t: str(c.t), done: !!c.done })),
+    atts: (Array.isArray(n.atts) ? n.atts : []).filter(a => a && SAFE_ID.test(String(a.id)) && (a.kind === "image" || a.kind === "pdf"))
+      .map(a => ({ ...a, id: String(a.id), name: str(a.name) || (a.kind === "pdf" ? "PDF" : "画像") })),
+    created: num(n.created), updated: num(n.updated), deletedAt: n.deletedAt ? num(n.deletedAt) : null, saved: true,
+  };
+}
+
 // ---------- バックアップ ----------
 const blobToData = b => new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(b); });
 const dataToBlob = async d => (await fetch(d)).blob();
@@ -356,12 +371,10 @@ async function importAll(file) {
   try {
     const data = JSON.parse(await file.text());
     if (data.app !== "pop-memo") throw new Error();
-    for (const n of data.notes) {
-      n.id = String(n.id || uid()).replace(/[^\w-]/g, "");
-      n.color = safeColor(n.color); n.title = n.title || ""; n.yomi = n.yomi || ""; n.text = n.text || "";
-      n.checks = Array.isArray(n.checks) ? n.checks : []; n.atts = Array.isArray(n.atts) ? n.atts : [];
+    for (const raw of data.notes) {
+      const n = sanitizeNote(raw);
       for (const a of n.atts) { a.blob = await dataToBlob(a.blob); a.thumb = a.thumb ? await dataToBlob(a.thumb) : null; }
-      await dbPut(n);
+      await dbPut(n); window.Sync?.notify(n.id);
     }
     await reload(); toast(`${data.notes.length}件 読み込みました 🎉`);
   } catch { toast("読み込めませんでした。ポップメモのバックアップか確認してね"); }
@@ -387,6 +400,34 @@ document.addEventListener("pointerdown", e => {
   b.appendChild(d); setTimeout(() => d.remove(), 600);
 });
 
+// ---------- クラウド自動バックアップのUI ----------
+function renderCloud() {
+  const S = window.Sync; if (!S) return;
+  const on = !!S.email;
+  $("cloudOff").hidden = on; $("cloudOn").hidden = !on;
+  if (!on) return;
+  const t = { syncing: "同期中…", ok: "同期済み ✅", error: "同期できませんでした ⚠️", login: "再ログインが必要です", off: "" }[S.status] || "";
+  const last = S.last ? new Date(S.last).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "まだ";
+  $("cloudInfo").textContent = `${S.email} ・ ${t} ・ 最終同期 ${last}` + (S.status === "error" ? `（${S.error}。ネットが戻れば自動で再試行します）` : "");
+  $("cloudBadge").textContent = S.status === "ok" ? "☁️✓" : S.status === "syncing" ? "☁️…" : S.status === "error" ? "☁️⚠" : "☁️";
+}
+function bindCloud() {
+  const S = window.Sync; if (!S) return;
+  S.onStatus(renderCloud);
+  const go = async signup => {
+    const email = $("cloudEmail").value.trim(), pw = $("cloudPw").value;
+    if (!email || pw.length < 8) { toast("メールアドレスと、8文字以上のパスワードを入れてね"); return; }
+    try { toast("通信中…"); await S.login(email, pw, signup); $("cloudPw").value = ""; toast("自動バックアップをONにしました 🎉"); }
+    catch (e) { toast(/Invalid login/i.test(e.message) ? "メールかパスワードが違うようです" : /already/i.test(e.message) ? "そのメールは登録済みです。「ログイン」を押してね" : "失敗: " + e.message, 4000); }
+    renderCloud();
+  };
+  $("btnLogin").addEventListener("click", () => go(false));
+  $("btnSignup").addEventListener("click", () => go(true));
+  $("btnSyncNow").addEventListener("click", () => S.sync());
+  $("btnLogout").addEventListener("click", async () => { if (confirm("自動バックアップをOFFにしますか？（クラウド上のデータは残ります）")) { await S.logout(); renderCloud(); } });
+  renderCloud();
+}
+
 // ---------- イベント ----------
 function bind() {
   $("rows").addEventListener("click", e => {
@@ -399,8 +440,8 @@ function bind() {
     const n = notes.find(x => x.id === c.dataset.id);
     if (showTrash) {
       if (confirm("このメモをゴミ箱から戻しますか？\n（キャンセルで完全に削除するか選べます）")) {
-        n.deletedAt = null; dbPut(n).then(reload);
-      } else if (confirm("完全に削除しますか？ 元に戻せません。")) dbDel(n.id).then(reload);
+        n.deletedAt = null; n.updated = Date.now(); dbPut(n).then(() => { window.Sync?.notify(n.id); return reload(); });
+      } else if (confirm("完全に削除しますか？ 元に戻せません。")) dbDel(n.id).then(() => { window.Sync?.forget(n.id); return reload(); });
       return;
     }
     openEditor(n, false);
@@ -419,6 +460,7 @@ function bind() {
   $("selSort").addEventListener("change", e => { settings.sort = e.target.value; saveSettings(); render(); });
   $("selTheme").addEventListener("change", e => { settings.theme = e.target.value; saveSettings(); applyTheme(); });
   $("btnExport").addEventListener("click", exportAll);
+  bindCloud();
   $("btnImport").addEventListener("click", () => $("fileImport").click());
   $("fileImport").addEventListener("change", e => { if (e.target.files[0]) importAll(e.target.files[0]); e.target.value = ""; });
 
@@ -432,7 +474,7 @@ function bind() {
     if (!confirm("このメモをゴミ箱に入れますか？")) return;
     clearTimeout(saveTimer);
     const n = cur; n.title = $("edTitle").value.trim(); n.yomi = $("edYomi").value.trim(); n.text = $("edText").value;
-    saveQ = saveQ.then(async () => { n.deletedAt = Date.now(); await dbPut(n); }); await saveQ;
+    saveQ = saveQ.then(async () => { n.deletedAt = Date.now(); n.updated = Date.now(); await dbPut(n); window.Sync?.notify(n.id); }); await saveQ;
     $("editor").hidden = true; document.body.style.overflow = ""; cur = null; await reload(); toast("ゴミ箱に入れました");
   });
   $("colors").addEventListener("click", e => {
@@ -483,5 +525,5 @@ function bind() {
   }
   // 1週間バックアップしていなければ促す
   const last = +localStorage.getItem("pm-lastBackup") || 0;
-  if (notes.length && Date.now() - last > 7 * 864e5) setTimeout(() => toast("⚙️ 設定からバックアップしておくと安心だよ", 4000), 1500);
+  if (notes.length && !localStorage.getItem("pm-cloud") && Date.now() - last > 7 * 864e5) setTimeout(() => toast("⚙️ 設定で自動バックアップをONにすると安心だよ", 4000), 1500);
 })();
