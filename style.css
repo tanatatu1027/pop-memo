@@ -1,0 +1,148 @@
+:root{
+  --bg:#fff7e8; --card:#ffffff; --ink:#2b2340; --sub:#7b7390; --line:#f0e3c8;
+  --pink:#ff6b9d; --yellow:#ffd60a; --teal:#3cc8be; --purple:#7864ff; --orange:#ff9f43;
+  --shadow:0 6px 0 rgba(43,35,64,.12);
+  --ease-bounce:cubic-bezier(.34,1.56,.64,1);
+}
+:root[data-theme="dark"]{ --bg:#1d1830; --card:#2a2342; --ink:#f4efff; --sub:#a79fc0; --line:#3a3258; --shadow:0 6px 0 rgba(0,0,0,.35); }
+@media (prefers-color-scheme:dark){
+  :root[data-theme="auto"]{ --bg:#1d1830; --card:#2a2342; --ink:#f4efff; --sub:#a79fc0; --line:#3a3258; --shadow:0 6px 0 rgba(0,0,0,.35); }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Maru Gothic ProN","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-weight:700}
+body{padding:env(safe-area-inset-top) 0 0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input,textarea,select{font:inherit;color:inherit}
+[hidden]{display:none!important}
+#app{max-width:640px;margin:0 auto;padding:12px 16px calc(110px + env(safe-area-inset-bottom))}
+
+/* ---------- ヘッダー ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;margin:4px 0 12px}
+.top h1{margin:0;font-size:28px;letter-spacing:.02em}
+.grad{background:linear-gradient(90deg,var(--pink),var(--orange),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
+.wiggle{display:inline-block;animation:wiggle 3s ease-in-out infinite;transform-origin:20% 90%}
+@keyframes wiggle{0%,86%,100%{transform:rotate(0)}90%{transform:rotate(-18deg)}94%{transform:rotate(14deg)}97%{transform:rotate(-8deg)}}
+.top-btns{display:flex;gap:8px}
+
+/* ---------- マイクロインタラクション共通 ---------- */
+.icon-btn,.pill-btn,.tool,.fab,.row-chip,.color-dot,.btn-mini{
+  transition:transform .25s var(--ease-bounce),box-shadow .2s ease,background-color .2s ease,filter .2s ease;
+  will-change:transform;
+}
+.icon-btn{width:44px;height:44px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);font-size:20px}
+.pill-btn{padding:10px 18px;border-radius:999px;background:var(--card);box-shadow:var(--shadow)}
+.pill-btn.big{width:100%;margin-top:14px;background:var(--pink);color:#fff;box-shadow:0 6px 0 #d94b7e}
+@media (hover:hover){
+  .icon-btn:hover{transform:translateY(-3px) rotate(-8deg) scale(1.1);box-shadow:0 10px 0 rgba(43,35,64,.14)}
+  .pill-btn:hover{transform:translateY(-3px) scale(1.05);box-shadow:0 9px 0 rgba(43,35,64,.14);filter:brightness(1.04)}
+  .tool:hover{transform:translateY(-5px) scale(1.08)}
+  .tool:hover span{animation:pop .5s var(--ease-bounce)}
+  .fab:hover{transform:scale(1.12) rotate(90deg);box-shadow:0 10px 0 #d94b7e,0 16px 24px rgba(255,107,157,.45)}
+  .row-chip:hover{transform:translateY(-3px) scale(1.08) rotate(-2deg)}
+  .color-dot:hover{transform:scale(1.25) rotate(12deg)}
+  .btn-mini:hover{transform:scale(1.15) rotate(-6deg)}
+  .card:hover{transform:translateY(-4px) rotate(-.6deg);box-shadow:0 10px 0 rgba(43,35,64,.13)}
+  .att:hover{transform:translateY(-3px) scale(1.04)}
+}
+.icon-btn:active,.pill-btn:active,.tool:active,.row-chip:active,.color-dot:active,.btn-mini:active{transform:scale(.88)!important;box-shadow:0 2px 0 rgba(43,35,64,.15)!important;transition-duration:.08s}
+.fab:active{transform:scale(.88)!important;box-shadow:0 2px 0 #d94b7e!important;transition-duration:.08s}
+.card:active{transform:scale(.97)!important;transition-duration:.08s}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.5) rotate(-12deg)}100%{transform:scale(1) rotate(0)}}
+
+/* ボタンを押したときの波紋 */
+.ripple{position:absolute;border-radius:50%;pointer-events:none;background:rgba(255,255,255,.55);transform:scale(0);animation:ripple .55s ease-out forwards}
+@keyframes ripple{to{transform:scale(3.2);opacity:0}}
+.icon-btn,.pill-btn,.fab,.tool{position:relative;overflow:hidden}
+
+/* ---------- 検索 ---------- */
+.search-wrap{position:relative;margin-bottom:12px}
+.search-ico{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:18px;transition:transform .3s var(--ease-bounce)}
+.search-wrap:focus-within .search-ico{transform:translateY(-50%) scale(1.3) rotate(-15deg)}
+#search{width:100%;padding:14px 16px 14px 46px;border-radius:999px;border:3px solid transparent;background:var(--card);box-shadow:var(--shadow);outline:none;transition:border-color .2s,transform .25s var(--ease-bounce)}
+#search:focus{border-color:var(--purple);transform:scale(1.02)}
+
+/* ---------- 行タブ ---------- */
+.rows{display:flex;gap:8px;overflow-x:auto;padding:10px 8px 14px;margin:0 -8px;scrollbar-width:none}
+.rows::-webkit-scrollbar{display:none}
+.row-chip{flex:0 0 auto;min-width:48px;height:48px;padding:0 14px;border-radius:16px;color:#fff;font-size:17px;box-shadow:0 5px 0 rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;gap:4px}
+.row-chip small{font-size:11px;opacity:.9}
+.row-chip.active{transform:translateY(-3px) scale(1.1);box-shadow:0 8px 0 rgba(0,0,0,.22),0 0 0 3px var(--card),0 0 0 6px currentColor}
+.list-title{font-size:15px;color:var(--sub);margin:4px 4px 10px}
+
+/* ---------- 一覧カード ---------- */
+.list{columns:2;column-gap:12px}
+.card{break-inside:avoid;margin:0 0 12px;padding:14px;border-radius:20px;background:var(--c,var(--card));color:#2b2340;box-shadow:var(--shadow);cursor:pointer;position:relative;
+  transition:transform .3s var(--ease-bounce),box-shadow .2s ease,opacity .6s ease;overflow:hidden;word-break:break-word}
+.card h3{margin:0 0 6px;font-size:16px}
+.card p{margin:0;font-size:13px;opacity:.8;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.card .meta{margin-top:8px;font-size:11px;opacity:.65;display:flex;gap:6px;flex-wrap:wrap}
+.card .pin{position:absolute;top:6px;right:8px;font-size:15px}
+.card img.th{width:100%;border-radius:12px;margin-top:8px;display:block}
+.card mark{background:#fff176;border-radius:4px;padding:0 2px;color:inherit}
+
+/* ===== Fade-in Up（スクロールに合わせてふわっと浮き上がる） ===== */
+.fade-up{opacity:0;transform:translateY(28px)}
+.fade-up.in{animation:fadeInUp .65s cubic-bezier(.22,1,.36,1) forwards;animation-delay:var(--d,0ms)}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+.fade-up.done{opacity:1;transform:none;animation:none}
+@media (prefers-reduced-motion:reduce){
+  .fade-up{opacity:1;transform:none}.fade-up.in{animation:none}
+  *{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+
+.empty{text-align:center;color:var(--sub);padding:50px 0;font-size:16px}
+.empty .big{font-size:56px;display:block;animation:float 2.4s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-10px)}}
+
+/* ---------- FAB ---------- */
+.fab{position:fixed;right:max(20px,calc(50% - 300px));bottom:calc(24px + env(safe-area-inset-bottom));width:68px;height:68px;border-radius:50%;background:var(--pink);color:#fff;font-size:38px;line-height:1;box-shadow:0 6px 0 #d94b7e,0 12px 20px rgba(255,107,157,.4);z-index:5}
+
+/* ---------- 編集画面 ---------- */
+.editor{position:fixed;inset:0;height:100dvh;background:var(--bg);z-index:20;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);animation:slideUp .35s var(--ease-bounce)}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.ed-bar{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;max-width:640px;width:100%;margin:0 auto}
+.ed-actions{display:flex;gap:8px}
+.icon-btn.on{background:var(--yellow)}
+.ed-body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:0 16px 20px;max-width:640px;width:100%;margin:0 auto}
+.ed-title{width:100%;border:0;background:transparent;font-size:26px;outline:none;padding:8px 0}
+.yomi-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.ed-yomi{flex:1;border:2px dashed var(--line);border-radius:12px;padding:8px 12px;background:transparent;outline:none;font-size:16px}
+.ed-yomi:focus{border-color:var(--purple)}
+.gyou-badge{padding:6px 12px;border-radius:999px;color:#fff;font-size:13px;white-space:nowrap}
+.colors{display:flex;gap:10px;margin:6px 0 12px}
+.color-dot{width:30px;height:30px;border-radius:50%;box-shadow:0 3px 0 rgba(0,0,0,.15)}
+.color-dot.sel{outline:3px solid var(--ink);outline-offset:2px}
+.ed-text{width:100%;min-height:90px;border:0;outline:none;background:transparent;font-size:17px;line-height:1.7;resize:none}
+.checks{margin:6px 0}
+.chk{display:flex;align-items:center;gap:10px;padding:6px 0;animation:fadeInUp .4s ease both}
+.chk input[type=checkbox]{width:24px;height:24px;accent-color:var(--teal);transition:transform .25s var(--ease-bounce)}
+.chk input[type=checkbox]:active{transform:scale(1.4)}
+.chk input[type=text]{flex:1;border:0;border-bottom:2px dotted var(--line);background:transparent;outline:none;font-size:16px;padding:4px}
+.chk.done input[type=text]{text-decoration:line-through;opacity:.5}
+.btn-mini{width:30px;height:30px;border-radius:50%;background:var(--card);box-shadow:0 3px 0 rgba(0,0,0,.12)}
+.atts{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
+.att{position:relative;width:calc(50% - 6px);border-radius:16px;background:var(--card);box-shadow:var(--shadow);overflow:hidden;transition:transform .3s var(--ease-bounce);cursor:pointer;animation:fadeInUp .45s ease both}
+.att img,.att canvas{width:100%;display:block}
+.att .nm{padding:8px 10px;font-size:12px;word-break:break-all}
+.att .pdfbox{background:#ffe3ea;text-align:center;padding:24px 0;font-size:40px}
+.att .rm{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff}
+.ed-tools{display:flex;justify-content:space-around;gap:8px;padding:10px 16px calc(12px + env(safe-area-inset-bottom));background:var(--card);box-shadow:0 -4px 16px rgba(0,0,0,.08);border-radius:24px 24px 0 0}
+.tool{flex:1;max-width:120px;padding:8px 4px;border-radius:16px;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tool span{font-size:24px;display:block}
+.tool.rec{background:#ffd1dc;animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.08)}}
+
+/* ---------- 設定シート ---------- */
+.sheet-bg{position:fixed;inset:0;background:rgba(20,10,40,.45);z-index:30;display:flex;align-items:flex-end;justify-content:center;animation:fade .25s}
+@keyframes fade{from{opacity:0}}
+.sheet{width:100%;max-width:640px;background:var(--bg);border-radius:28px 28px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));animation:slideUp .4s var(--ease-bounce)}
+.sheet h2{margin:0 0 10px}
+.row-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:2px dotted var(--line);gap:10px}
+.row-item.col{flex-direction:column;align-items:flex-start}
+.row-item select{padding:8px 10px;border-radius:12px;border:2px solid var(--line);background:var(--card)}
+.btn-line{display:flex;gap:10px}
+small{color:var(--sub);font-weight:600}
+
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:999px;z-index:50;max-width:90%;text-align:center;animation:fadeInUp .35s ease}
+.viewer{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px}
+.viewer img{max-width:100%;max-height:80dvh;border-radius:12px}
