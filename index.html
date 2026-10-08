@@ -68,6 +68,18 @@
   <input type="file" id="filePdf" accept="application/pdf" multiple hidden>
 </section>
 
+<!-- ゴミ箱メニュー -->
+<div id="trashSheet" class="sheet-bg" hidden>
+  <div class="sheet">
+    <h2>🗑️ ゴミ箱のメモ</h2>
+    <div class="btn-line trash-actions">
+      <button class="pill-btn big" id="trRestore">♻️ 復元</button>
+      <button class="pill-btn big" id="trDelete">完全に削除</button>
+    </div>
+    <button class="pill-btn big" id="trCancel">キャンセル</button>
+  </div>
+</div>
+
 <!-- 設定シート -->
 <div id="sheet" class="sheet-bg" hidden>
   <div class="sheet">
@@ -140,7 +152,7 @@
     <details><summary>📌 ピン留め・🎨 色</summary>
       <p>編集画面の右上の 📌 を押すと、そのメモが一覧の先頭に固定されます。タイトルの下の丸いボタンでメモの色を変えられます。</p></details>
     <details><summary>🗑️ 消したメモをもどす</summary>
-      <p>編集画面の 🗑️ で、メモは <b>ゴミ箱</b> に入ります（すぐには消えません）。一覧の右上の 🗑️ でゴミ箱を見られます。メモを押すと「戻す」か「完全に削除」を選べます。ゴミ箱のメモは30日たつと自動で消えます。</p></details>
+      <p>編集画面の 🗑️ で、メモは <b>ゴミ箱</b> に入ります（すぐには消えません）。一覧の右上の 🗑️ でゴミ箱を見られます。メモを押すと「復元」か「完全に削除」を選べます（キャンセルなら何も変わりません）。ゴミ箱のメモは30日たつと自動で消えます。</p></details>
     <details><summary>☁️ 自動バックアップ</summary>
       <p>設定の「自動バックアップ」でメールアドレスとパスワード（8文字以上）を登録すると、メモを書くたびに <b>クラウドへ自動で保存</b> されます。画像とPDFも含みます。</p>
       <p>機種変更やデータが消えたときは、同じメールアドレスでログインすれば元に戻ります。パスワードは忘れないようにしてください。</p>

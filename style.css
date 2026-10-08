@@ -141,6 +141,8 @@ input,textarea,select{font:inherit;color:inherit}
 .row-item.col{flex-direction:column;align-items:flex-start}
 .row-item select{padding:8px 10px;border-radius:12px;border:2px solid var(--line);background:var(--card)}
 .btn-line{display:flex;gap:10px}
+.trash-actions{margin-bottom:10px}
+.trash-actions .pill-btn,#trCancel{flex:1;width:100%}
 small{color:var(--sub);font-weight:600}
 
 .toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:999px;z-index:50;max-width:90%;text-align:center;animation:fadeInUp .35s ease}

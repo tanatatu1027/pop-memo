@@ -64,6 +64,7 @@ let notes = [];
 let filter = "all";      // all | 行のキー
 let query = "";
 let showTrash = false;
+let trashTarget = null;
 let cur = null;          // 編集中のメモ
 let curIsNew = false;
 let settings = {};
@@ -488,12 +489,22 @@ function bind() {
     const c = e.target.closest(".card"); if (!c) return;
     const n = notes.find(x => x.id === c.dataset.id);
     if (showTrash) {
-      if (confirm("このメモをゴミ箱から戻しますか？\n（キャンセルで完全に削除するか選べます）")) {
-        n.deletedAt = null; n.updated = Date.now(); dbPut(n).then(() => { window.Sync?.notify(n.id); return reload(); });
-      } else if (confirm("完全に削除しますか？ 元に戻せません。")) dbDel(n.id).then(() => { window.Sync?.forget(n.id); return reload(); });
+      trashTarget = n; $("trashSheet").hidden = false;
       return;
     }
     openEditor(n, false);
+  });
+  const closeTrash = () => { $("trashSheet").hidden = true; trashTarget = null; };
+  $("trCancel").addEventListener("click", closeTrash);
+  $("trashSheet").addEventListener("click", e => { if (e.target === $("trashSheet")) closeTrash(); });
+  $("trRestore").addEventListener("click", () => {
+    const n = trashTarget; closeTrash(); if (!n) return;
+    n.deletedAt = null; n.updated = Date.now();
+    dbPut(n).then(() => { window.Sync?.notify(n.id); return reload(); }).then(() => toast("復元しました"));
+  });
+  $("trDelete").addEventListener("click", () => {
+    const n = trashTarget; closeTrash(); if (!n) return;
+    if (confirm("完全に削除しますか？ 元に戻せません。")) dbDel(n.id).then(() => { window.Sync?.forget(n.id); return reload(); });
   });
   $("fab").addEventListener("click", () => openEditor(newNote(), true));
   $("btnTrash").addEventListener("click", () => {
