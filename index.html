@@ -31,6 +31,8 @@
 
   <nav id="rows" class="rows" aria-label="五十音の行"></nav>
 
+  <nav id="cats" class="cats" aria-label="項目"></nav>
+
   <div id="listTitle" class="list-title"></div>
   <main id="list" class="list"></main>
   <div id="empty" class="empty" hidden></div>
@@ -54,6 +56,7 @@
       <span id="edGyou" class="gyou-badge"></span>
     </div>
     <div id="colors" class="colors"></div>
+    <label class="cat-row">項目 <select id="edCat"></select></label>
     <textarea id="edText" class="ed-text" placeholder="ここにメモを書いてね"></textarea>
     <div id="checks" class="checks"></div>
     <div id="atts" class="atts"></div>
@@ -137,6 +140,9 @@
     <details><summary>🔤 五十音で探す</summary>
       <p>一覧の上にある「あ行・か行…」のカラフルなボタンを押すと、その行のメモだけが表示されます。「ぜんぶ」で全部に戻ります。</p>
       <p>行は <b>タイトルの1文字目</b> で決まります。漢字や英字のタイトル（例:「田中さん」「Wi-Fi」）は、編集画面の <b>読みがな</b> 欄に「たなか」「わいふぁい」と入れると、正しい行に入ります。入れないと「他」行になります。</p></details>
+    <details><summary>🏷️ 項目で分ける（仕事・スロットなど）</summary>
+      <p>一覧の「あ行・か行…」の下にある項目ボタンで、メモを項目ごとに絞り込めます。<b>＋ 項目</b> を押すと、好きな名前（仕事、スロットなど）の項目を追加できます。</p>
+      <p>メモに項目を付けるには、編集画面の「項目」欄で選びます。項目ボタンを <b>長押し</b> すると名前の変更や削除ができます（削除してもメモは消えず「項目なし」になります）。行ボタンと組み合わせることもできます。</p></details>
     <details><summary>🔍 検索する</summary>
       <p>画面上の検索バーに文字を入れると、タイトル・本文・読みがな・チェック項目・添付ファイル名からさがします。ひらがなとカタカナ、全角と半角は区別しません。見つかった文字は黄色くなります。</p>
       <p>行のボタンと組み合わせて、「か行の中から探す」こともできます。</p></details>

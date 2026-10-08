@@ -175,3 +175,13 @@ small{color:var(--sub);font-weight:600}
 
 .tool b{font-weight:700}
 .ed-text.recording{background:linear-gradient(180deg,rgba(255,107,157,.12),transparent);border-radius:14px;box-shadow:0 0 0 3px rgba(255,107,157,.45);padding:8px 10px;caret-color:transparent;transition:box-shadow .3s,background .3s}
+
+/* 項目（仕事・スロットなど） */
+.cats{display:flex;gap:8px;overflow-x:auto;padding:0 8px 10px;margin:0 -8px;scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.cat-chip{flex:0 0 auto;height:34px;padding:0 14px;border-radius:999px;font-size:14px;font-weight:700;background:var(--card);color:var(--ink);border:2px solid var(--cc,rgba(128,128,128,.4));-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.cat-chip.active{background:var(--cc,#2b2340);color:#fff}
+.cat-chip.add{border-style:dashed;opacity:.8}
+.cat-tag{color:#fff;padding:1px 8px;border-radius:999px}
+.cat-row{display:flex;align-items:center;gap:10px;margin:0 0 10px;font-size:14px}
+.cat-row select{flex:1;padding:8px 10px;border-radius:12px;border:2px solid rgba(128,128,128,.3);background:var(--card);color:var(--ink);font-size:15px}

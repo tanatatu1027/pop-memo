@@ -34,6 +34,32 @@ function gyouOf(note) {
   return g ? g.k : "他";
 }
 
+// ---------- 項目（仕事・スロットなど。メモに1つ付ける） ----------
+const CAT_COLORS = ["#ff6b9d", "#3fa7f5", "#7bc043", "#ff9f43", "#7864ff", "#3cc8be", "#ef5b5b", "#b45cf0"];
+const catColor = name => { let h = 0; for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return CAT_COLORS[h % CAT_COLORS.length]; };
+// 設定の一覧に、メモ側だけにある項目（他の端末から届いたもの）も足す
+function allCats() {
+  const list = [...settings.cats];
+  notes.forEach(n => { if (n.cat && !list.includes(n.cat)) list.push(n.cat); });
+  return list;
+}
+function addCat(raw) {
+  const name = (raw || "").trim().slice(0, 20);
+  if (!name || name === "+" || name === "all") return null;
+  if (!allCats().includes(name)) { settings.cats.push(name); saveSettings(); }
+  return name;
+}
+async function renameCat(from, to) {
+  settings.cats = settings.cats.map(c => (c === from ? to : c)).filter((c, i, a) => a.indexOf(c) === i);
+  if (!settings.cats.includes(to)) settings.cats.push(to);
+  saveSettings();
+  for (const n of notes) if (n.cat === from) { n.cat = to; n.updated = Date.now(); await dbPut(n); window.Sync?.notify(n.id); }
+}
+async function deleteCat(name) {
+  settings.cats = settings.cats.filter(c => c !== name); saveSettings();
+  for (const n of notes) if (n.cat === name) { n.cat = ""; n.updated = Date.now(); await dbPut(n); window.Sync?.notify(n.id); }
+}
+
 // ---------- IndexedDB ----------
 let db;
 function openDB() {
@@ -62,6 +88,7 @@ const dbDel = id => run("readwrite", s => s.delete(id));
 const $ = id => document.getElementById(id);
 let notes = [];
 let filter = "all";      // all | 行のキー
+let catFilter = "all";   // all | 項目名
 let query = "";
 let showTrash = false;
 let trashTarget = null;
@@ -71,6 +98,7 @@ let settings = {};
 try { settings = JSON.parse(localStorage.getItem("pm-settings") || "{}") || {}; } catch {}
 settings.sort = settings.sort || "updated";
 settings.theme = settings.theme || "auto";
+if (!Array.isArray(settings.cats)) settings.cats = [];
 const saveSettings = () => localStorage.setItem("pm-settings", JSON.stringify(settings));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
@@ -86,12 +114,13 @@ function applyTheme() { document.documentElement.dataset.theme = settings.theme;
 
 // ---------- 一覧 ----------
 function noteText(n) {
-  return [n.title, n.yomi, n.text, ...(n.checks || []).map(c => c.t), ...(n.atts || []).map(a => a.name)].join("\n");
+  return [n.title, n.yomi, n.cat, n.text, ...(n.checks || []).map(c => c.t), ...(n.atts || []).map(a => a.name)].join("\n");
 }
 function visibleNotes() {
   const q = fold(query).trim();
   let arr = notes.filter(n => showTrash ? !!n.deletedAt : !n.deletedAt);
   if (filter !== "all") arr = arr.filter(n => gyouOf(n) === filter);
+  if (catFilter !== "all") arr = arr.filter(n => (n.cat || "") === catFilter);
   if (q) arr = arr.filter(n => fold(noteText(n)).includes(q));
   const by = settings.sort;
   arr.sort((a, b) => {
@@ -131,6 +160,15 @@ function observeFade() {
   });
 }
 
+function renderCats() {
+  const cats = allCats();
+  if (catFilter !== "all" && !cats.includes(catFilter)) catFilter = "all";
+  const chips = [`<button class="cat-chip ${catFilter === "all" ? "active" : ""}" data-cat="all">すべて</button>`];
+  cats.forEach(c => chips.push(`<button class="cat-chip ${catFilter === c ? "active" : ""}" data-cat="${esc(c)}" style="--cc:${catColor(c)}">${esc(c)}</button>`));
+  chips.push('<button class="cat-chip add" data-cat="+" aria-label="項目を追加">＋ 項目</button>');
+  $("cats").innerHTML = chips.join("");
+}
+
 function renderRows() {
   const counts = {};
   const pool = notes.filter(n => showTrash ? !!n.deletedAt : !n.deletedAt); // ゴミ箱表示中はゴミ箱の分だけ数える
@@ -145,11 +183,11 @@ function renderRows() {
 
 function render() {
   revokeAll(thumbUrls);
-  renderRows();
+  renderRows(); renderCats();
   const arr = visibleNotes();
   const q = query.trim();
   $("listTitle").textContent = (showTrash ? "🗑️ ゴミ箱（30日で自動削除）" : "") +
-    (q ? ` 「${q}」の検索結果 ${arr.length}件` : (showTrash ? "" : (filter === "all" ? "すべてのメモ" : `${filter}${filter === "他" ? "" : "行"}のメモ`) + ` ${arr.length}件`));
+    (q ? ` 「${q}」の検索結果 ${arr.length}件` : (showTrash ? "" : (catFilter !== "all" ? `【${catFilter}】` : "") + (filter === "all" ? "すべてのメモ" : `${filter}${filter === "他" ? "" : "行"}のメモ`) + ` ${arr.length}件`));
   $("list").innerHTML = arr.map(n => {
     const g = gyouOf(n);
     const img = (n.atts || []).find(a => a.kind === "image");
@@ -163,6 +201,7 @@ function render() {
       ${body ? `<p>${highlight(body, q)}</p>` : ""}
       ${img ? `<img class="th" data-th="${esc(n.id)}" alt="">` : ""}
       <div class="meta"><span style="color:${gyouColor(g)}">● ${g}${g === "他" ? "" : "行"}</span>
+        ${n.cat ? `<span class="cat-tag" style="background:${catColor(n.cat)}">${esc(n.cat)}</span>` : ""}
         ${(n.checks || []).length ? `<span>☑ ${done}/${n.checks.length}</span>` : ""}
         ${pdfs ? `<span>📎 PDF${pdfs}</span>` : ""}
         ${htmls ? `<span>🌐 HTML${htmls}</span>` : ""}</div>
@@ -195,13 +234,13 @@ async function purgeTrash() {
 // ---------- 編集 ----------
 function newNote() {
   const now = Date.now();
-  return { id: uid(), title: "", yomi: "", text: "", color: "#ffffff", pinned: false, checks: [], atts: [], created: now, updated: now, deletedAt: null };
+  return { id: uid(), title: "", yomi: "", text: "", color: "#ffffff", pinned: false, cat: catFilter === "all" ? "" : catFilter, checks: [], atts: [], created: now, updated: now, deletedAt: null };
 }
 function openEditor(n, isNew) {
   cur = n; curIsNew = !!isNew;
   $("edTitle").value = n.title; $("edYomi").value = n.yomi; $("edText").value = n.text;
   $("edPin").classList.toggle("on", n.pinned);
-  renderColors(); renderChecks(); renderAtts(); updateGyouBadge();
+  renderColors(); renderCatSelect(); renderChecks(); renderAtts(); updateGyouBadge();
   $("editor").hidden = false;
   document.body.style.overflow = "hidden";
   autosize();
@@ -215,6 +254,12 @@ function updateGyouBadge() {
 }
 function renderColors() {
   $("colors").innerHTML = COLORS.map(c => `<button class="color-dot ${cur.color === c ? "sel" : ""}" data-c="${c}" style="background:${c};border:2px solid rgba(0,0,0,.1)" aria-label="色"></button>`).join("");
+}
+function renderCatSelect() {
+  const sel = $("edCat");
+  const cats = allCats();
+  sel.innerHTML = '<option value="">項目なし</option>' + cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("") + '<option value="+">＋ 新しい項目…</option>';
+  sel.value = cur.cat || "";
 }
 function renderChecks() {
   $("checks").innerHTML = (cur.checks || []).map((c, i) => `<div class="chk ${c.done ? "done" : ""}" data-i="${i}">
@@ -392,7 +437,7 @@ function sanitizeNote(n, forceId) {
   const id = String(forceId ?? n.id ?? "").replace(/[^\w-]/g, "").slice(0, 64) || uid();
   const str = v => (typeof v === "string" ? v : "");
   return {
-    id, title: str(n.title), yomi: str(n.yomi), text: str(n.text), color: safeColor(n.color), pinned: !!n.pinned,
+    id, title: str(n.title), yomi: str(n.yomi), text: str(n.text), color: safeColor(n.color), pinned: !!n.pinned, cat: str(n.cat).slice(0, 20),
     checks: (Array.isArray(n.checks) ? n.checks : []).filter(c => c && typeof c === "object").map(c => ({ t: str(c.t), done: !!c.done })),
     atts: (Array.isArray(n.atts) ? n.atts : []).filter(a => a && SAFE_ID.test(String(a.id)) && (a.kind === "image" || a.kind === "pdf" || a.kind === "html"))
       .map(a => ({ ...a, id: String(a.id), name: str(a.name) || (a.kind === "pdf" ? "PDF" : a.kind === "html" ? "HTML" : "画像") })),
@@ -484,6 +529,33 @@ function bind() {
   $("rows").addEventListener("click", e => {
     const b = e.target.closest(".row-chip"); if (!b) return;
     filter = b.dataset.k; render();
+  });
+  // 項目ボタン: タップで絞り込み／「＋ 項目」で追加／長押しで名前変更・削除
+  let pressT, pressed = false;
+  $("cats").addEventListener("pointerdown", e => {
+    const b = e.target.closest(".cat-chip"); pressed = false;
+    if (!b || ["all", "+"].includes(b.dataset.cat)) return;
+    pressT = setTimeout(async () => {
+      pressed = true;
+      const old = b.dataset.cat;
+      const v = prompt(`項目「${old}」の名前を変更します。\n空欄にすると項目を削除します（メモは消えず「項目なし」になります）。`, old);
+      if (v === null) return;
+      const name = v.trim().slice(0, 20);
+      if (!name) { if (confirm(`項目「${old}」を削除しますか？`)) { await deleteCat(old); if (catFilter === old) catFilter = "all"; render(); } return; }
+      if (name === old || name === "+" || name === "all") return;
+      await renameCat(old, name); if (catFilter === old) catFilter = name; render();
+    }, 600);
+  });
+  ["pointerup", "pointerleave", "pointercancel"].forEach(t => $("cats").addEventListener(t, () => clearTimeout(pressT)));
+  $("cats").addEventListener("click", e => {
+    const b = e.target.closest(".cat-chip"); if (!b || pressed) { pressed = false; return; }
+    if (b.dataset.cat === "+") { const name = addCat(prompt("新しい項目の名前（例: 仕事、スロット）")); if (name) { catFilter = name; render(); } return; }
+    catFilter = b.dataset.cat; render();
+  });
+  $("edCat").addEventListener("change", e => {
+    let v = e.target.value;
+    if (v === "+") { v = addCat(prompt("新しい項目の名前（例: 仕事、スロット）")) || ""; }
+    cur.cat = v; renderCatSelect(); scheduleSave();
   });
   $("search").addEventListener("input", e => { query = e.target.value; render(); });
   $("list").addEventListener("click", e => {
