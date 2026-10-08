@@ -247,6 +247,7 @@ function commit(n = cur, isNew = curIsNew) {
   return saveQ;
 }
 async function closeEditor() {
+  stopMic(true);
   clearTimeout(saveTimer);
   await commit();
   $("editor").hidden = true; document.body.style.overflow = "";
@@ -307,31 +308,72 @@ function openAtt(i) {
 }
 
 // ---------- 音声入力 ----------
-let rec = null;
-const isStandalone = () => navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
+// iPhone標準の音声認識（Siriと同じ変換）を直接使う。話した内容がリアルタイムでメモ欄に出て、
+// 漢字・カタカナへの変換もその認識結果に含まれる。キーボードは出さない。
+let rec = null, recWanted = false, recBase = null, recRestarts = 0;
+const MIC_ERR = {
+  "not-allowed": "マイクの許可がありません。iPhoneの「設定」→「Safari」→「マイク」で許可してね",
+  "service-not-allowed": "音声認識がオフです。「設定」→「一般」→「キーボード」→「音声入力」をオンにしてね",
+  "audio-capture": "マイクが使えません。他のアプリがマイクを使っていないか確認してね",
+  "network": "通信できないため音声認識できません。ネット接続を確認してね",
+  "language-not-supported": "日本語の音声認識が使えません",
+};
+function setRecUI(on) {
+  $("tMic").classList.toggle("rec", on);
+  $("tMic").querySelector("b").textContent = on ? "停止" : "音声";
+  $("edText").classList.toggle("recording", on);
+  $("edText").readOnly = on; // 読み取り専用にしてキーボードが出ないようにする
+  if (on) document.activeElement?.blur();
+}
+function stopMic(silent) {
+  recWanted = false;
+  if (rec) { try { rec.stop(); } catch {} }
+  setRecUI(false);
+  if (!silent) scheduleSave();
+}
 function toggleMic() {
-  const ta = $("edText"); ta.focus();
+  if (recWanted) { stopMic(); return; }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR || isStandalone()) {
-    toast("キーボードの 🎤 ボタンを押して話してね（iPhone標準の音声入力）", 4200);
-    return;
-  }
-  if (rec) { rec.stop(); return; }
-  rec = new SR(); rec.lang = "ja-JP"; rec.interimResults = false; rec.continuous = true;
+  if (!SR) { toast("このブラウザは音声認識に対応していません。Safariで開いてみてね", 4500); return; }
+  const ta = $("edText");
+  const pos = ta.selectionStart ?? ta.value.length;
+  recBase = { before: ta.value.slice(0, pos), after: ta.value.slice(ta.selectionEnd ?? pos) };
+  recWanted = true; recRestarts = 0;
+  setRecUI(true);
+  startRec(SR);
+  toast("話してね🎤 もう一度押すと止まります", 3000);
+}
+function startRec(SR) {
+  const ta = $("edText");
+  rec = new SR();
+  rec.lang = "ja-JP"; rec.interimResults = true; rec.continuous = true; rec.maxAlternatives = 1;
   rec.onresult = e => {
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) {
-        const p = ta.selectionStart ?? ta.value.length;
-        const add = e.results[i][0].transcript;
-        ta.value = ta.value.slice(0, p) + add + ta.value.slice(ta.selectionEnd ?? p);
-        ta.selectionStart = ta.selectionEnd = p + add.length;
-      }
-    }
+    // このセッションの認識結果を最初から組み立てる（確定分＋途中経過）
+    const said = Array.from(e.results).map(r => r[0].transcript).join("");
+    ta.value = recBase.before + said + recBase.after;
+    const caret = (recBase.before + said).length;
+    ta.selectionStart = ta.selectionEnd = caret;
     autosize(); scheduleSave();
+    ta.scrollTop = ta.scrollHeight;
+    document.querySelector(".ed-body").scrollTop = ta.offsetTop + ta.scrollHeight;
+    recRestarts = 0;
   };
-  rec.onend = () => { rec = null; $("tMic").classList.remove("rec"); };
-  rec.onerror = () => { toast("音声入力が使えませんでした。キーボードの🎤を使ってね"); };
-  rec.start(); $("tMic").classList.add("rec"); toast("聞いてるよ… もう一度押すと止まります");
+  rec.onerror = e => {
+    if (e.error === "no-speech" || e.error === "aborted") return; // 無音は再開で対応
+    recWanted = false; setRecUI(false);
+    toast(MIC_ERR[e.error] || `音声認識でエラー（${e.error}）。キーボードのマイクも使えます`, 5500);
+  };
+  rec.onend = () => {
+    // iPhoneは無音で自動終了するので、止めていなければ続きから再開する
+    if (recWanted && recRestarts < 5) {
+      recRestarts++;
+      recBase = { before: ta.value.slice(0, ta.selectionStart ?? ta.value.length), after: recBase.after };
+      try { startRec(SR); return; } catch {}
+    }
+    if (recWanted) toast("音声認識が止まりました。もう一度🎤を押してね");
+    recWanted = false; setRecUI(false);
+  };
+  try { rec.start(); } catch (err) { recWanted = false; setRecUI(false); toast("音声認識を開始できませんでした"); }
 }
 
 // ---------- 外部から来たメモの検証（バックアップ読み込み／クラウド受信で共用） ----------

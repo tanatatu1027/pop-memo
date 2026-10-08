@@ -169,3 +169,6 @@ small{color:var(--sub);font-weight:600}
 @media (hover:hover){.manual summary:hover{color:var(--purple)}}
 .manual details p{margin:0 0 12px;font-size:15px;line-height:1.75;font-weight:600;color:var(--ink)}
 .manual details[open] p{animation:fadeInUp .4s ease both}
+
+.tool b{font-weight:700}
+.ed-text.recording{background:linear-gradient(180deg,rgba(255,107,157,.12),transparent);border-radius:14px;box-shadow:0 0 0 3px rgba(255,107,157,.45);padding:8px 10px;caret-color:transparent;transition:box-shadow .3s,background .3s}
