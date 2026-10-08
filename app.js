@@ -152,6 +152,7 @@ function render() {
     const g = gyouOf(n);
     const img = (n.atts || []).find(a => a.kind === "image");
     const pdfs = (n.atts || []).filter(a => a.kind === "pdf").length;
+    const htmls = (n.atts || []).filter(a => a.kind === "html").length;
     const done = (n.checks || []).filter(c => c.done).length;
     const body = (n.text || "").slice(0, 160);
     return `<article class="card fade-up" data-id="${esc(n.id)}" style="--c:${safeColor(n.color)}">
@@ -161,7 +162,8 @@ function render() {
       ${img ? `<img class="th" data-th="${esc(n.id)}" alt="">` : ""}
       <div class="meta"><span style="color:${gyouColor(g)}">● ${g}${g === "他" ? "" : "行"}</span>
         ${(n.checks || []).length ? `<span>☑ ${done}/${n.checks.length}</span>` : ""}
-        ${pdfs ? `<span>📎 PDF${pdfs}</span>` : ""}</div>
+        ${pdfs ? `<span>📎 PDF${pdfs}</span>` : ""}
+        ${htmls ? `<span>🌐 HTML${htmls}</span>` : ""}</div>
     </article>`;
   }).join("");
   // 画像サムネイルを blob URL で設定
@@ -219,8 +221,8 @@ function renderChecks() {
 function renderAtts() {
   revokeAll(attUrls);
   $("atts").innerHTML = (cur.atts || []).map((a, i) => `<div class="att" data-i="${i}">
-    ${a.kind === "image" ? `<img data-ai="${i}" alt="">` : (a.thumb ? `<img data-ai="${i}" data-thumb="1" alt="">` : '<div class="pdfbox">📄</div>')}
-    <div class="nm">${a.kind === "pdf" ? "📎 " : ""}${esc(a.name)}</div><button class="rm" data-rm="${i}" aria-label="削除">✕</button></div>`).join("");
+    ${a.kind === "image" ? `<img data-ai="${i}" alt="">` : (a.thumb ? `<img data-ai="${i}" data-thumb="1" alt="">` : '<div class="pdfbox">${a.kind === "html" ? "🌐" : "📄"}</div>')}
+    <div class="nm">${a.kind === "pdf" || a.kind === "html" ? "📎 " : ""}${esc(a.name)}</div><button class="rm" data-rm="${i}" aria-label="削除">✕</button></div>`).join("");
   document.querySelectorAll("#atts img[data-ai]").forEach(el => {
     const a = cur.atts[+el.dataset.ai];
     el.src = makeUrl(attUrls, el.dataset.thumb ? a.thumb : a.blob);
@@ -300,7 +302,12 @@ async function addFiles(files, kind) {
 function openAtt(i) {
   const a = cur.atts[i];
   if (a.kind === "image") {
+    $("viewerImg").hidden = false; $("viewerFrame").hidden = true;
     $("viewerImg").src = makeUrl(attUrls, a.blob); $("viewer").hidden = false;
+  } else if (a.kind === "html") {
+    // 権限を絞った枠（sandbox）の中で表示する。アプリ本体のデータには触れない
+    $("viewerImg").hidden = true; $("viewerFrame").hidden = false;
+    $("viewerFrame").src = makeUrl(attUrls, new Blob([a.blob], { type: "text/html" })); $("viewer").hidden = false;
   } else {
     const w = window.open(URL.createObjectURL(new Blob([a.blob], { type: "application/pdf" })), "_blank");
     if (!w) toast("PDFを開けませんでした。ポップアップを許可してね");
@@ -385,8 +392,8 @@ function sanitizeNote(n, forceId) {
   return {
     id, title: str(n.title), yomi: str(n.yomi), text: str(n.text), color: safeColor(n.color), pinned: !!n.pinned,
     checks: (Array.isArray(n.checks) ? n.checks : []).filter(c => c && typeof c === "object").map(c => ({ t: str(c.t), done: !!c.done })),
-    atts: (Array.isArray(n.atts) ? n.atts : []).filter(a => a && SAFE_ID.test(String(a.id)) && (a.kind === "image" || a.kind === "pdf"))
-      .map(a => ({ ...a, id: String(a.id), name: str(a.name) || (a.kind === "pdf" ? "PDF" : "画像") })),
+    atts: (Array.isArray(n.atts) ? n.atts : []).filter(a => a && SAFE_ID.test(String(a.id)) && (a.kind === "image" || a.kind === "pdf" || a.kind === "html"))
+      .map(a => ({ ...a, id: String(a.id), name: str(a.name) || (a.kind === "pdf" ? "PDF" : a.kind === "html" ? "HTML" : "画像") })),
     created: num(n.created), updated: num(n.updated), deletedAt: n.deletedAt ? num(n.deletedAt) : null, saved: true,
   };
 }
@@ -552,7 +559,7 @@ function bind() {
     if (rm) { if (confirm("この添付を外しますか？")) { cur.atts.splice(+rm.dataset.rm, 1); renderAtts(); scheduleSave(); } return; }
     const a = e.target.closest(".att"); if (a) openAtt(+a.dataset.i);
   });
-  $("viewerClose").addEventListener("click", () => ($("viewer").hidden = true));
+  $("viewerClose").addEventListener("click", () => { $("viewer").hidden = true; $("viewerFrame").src = "about:blank"; });
   // アプリが裏に回る時に保存
   document.addEventListener("visibilitychange", () => { if (document.hidden && cur) commit(); });
   addEventListener("pagehide", () => { if (cur) commit(); });
