@@ -221,7 +221,7 @@ function renderChecks() {
 function renderAtts() {
   revokeAll(attUrls);
   $("atts").innerHTML = (cur.atts || []).map((a, i) => `<div class="att" data-i="${i}">
-    ${a.kind === "image" ? `<img data-ai="${i}" alt="">` : (a.thumb ? `<img data-ai="${i}" data-thumb="1" alt="">` : '<div class="pdfbox">${a.kind === "html" ? "🌐" : "📄"}</div>')}
+    ${a.kind === "image" ? `<img data-ai="${i}" alt="">` : (a.thumb ? `<img data-ai="${i}" data-thumb="1" alt="">` : `<div class="pdfbox">${a.kind === "html" ? "🌐" : "📄"}</div>`)}
     <div class="nm">${a.kind === "pdf" || a.kind === "html" ? "📎 " : ""}${esc(a.name)}</div><button class="rm" data-rm="${i}" aria-label="削除">✕</button></div>`).join("");
   document.querySelectorAll("#atts img[data-ai]").forEach(el => {
     const a = cur.atts[+el.dataset.ai];
