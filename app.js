@@ -456,6 +456,8 @@ function bind() {
     $("sheet").hidden = false; showStorage();
   });
   $("sheetClose").addEventListener("click", () => ($("sheet").hidden = true));
+  $("btnHelp").addEventListener("click", () => { $("manual").hidden = false; $("manual").querySelector(".manual-body").scrollTop = 0; });
+  $("manualClose").addEventListener("click", () => ($("manual").hidden = true));
   $("sheet").addEventListener("click", e => { if (e.target === $("sheet")) $("sheet").hidden = true; });
   $("selSort").addEventListener("change", e => { settings.sort = e.target.value; saveSettings(); render(); });
   $("selTheme").addEventListener("change", e => { settings.theme = e.target.value; saveSettings(); applyTheme(); });

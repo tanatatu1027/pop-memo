@@ -72,6 +72,7 @@
 <div id="sheet" class="sheet-bg" hidden>
   <div class="sheet">
     <h2>設定 ⚙️</h2>
+    <button class="row-item help-link" id="btnHelp"><span>📖 つかいかた</span><span>›</span></button>
     <label class="row-item">並び替え
       <select id="selSort">
         <option value="updated">更新が新しい順</option>
@@ -112,6 +113,46 @@
     <button class="pill-btn big" id="sheetClose">とじる</button>
   </div>
 </div>
+
+
+<!-- つかいかた -->
+<section id="manual" class="manual" hidden>
+  <div class="ed-bar"><button class="pill-btn" id="manualClose">← もどる</button><b class="manual-ttl">📖 つかいかた</b><span style="width:44px"></span></div>
+  <div class="manual-body">
+    <details open><summary>✏️ メモをつくる</summary>
+      <p>右下の <b>＋</b> を押すと新しいメモができます。書いた内容は <b>自動で保存</b> されるので、保存ボタンはありません。「← もどる」で一覧に戻ります。</p>
+      <p>何も書かずに戻ると、空のメモは作られません。</p></details>
+    <details><summary>🔤 五十音で探す</summary>
+      <p>一覧の上にある「あ行・か行…」のカラフルなボタンを押すと、その行のメモだけが表示されます。「ぜんぶ」で全部に戻ります。</p>
+      <p>行は <b>タイトルの1文字目</b> で決まります。漢字や英字のタイトル（例:「田中さん」「Wi-Fi」）は、編集画面の <b>読みがな</b> 欄に「たなか」「わいふぁい」と入れると、正しい行に入ります。入れないと「他」行になります。</p></details>
+    <details><summary>🔍 検索する</summary>
+      <p>画面上の検索バーに文字を入れると、タイトル・本文・読みがな・チェック項目・添付ファイル名からさがします。ひらがなとカタカナ、全角と半角は区別しません。見つかった文字は黄色くなります。</p>
+      <p>行のボタンと組み合わせて、「か行の中から探す」こともできます。</p></details>
+    <details><summary>🎤 音声で入力する</summary>
+      <p>編集画面の下の <b>🎤音声</b> を押すと、キーボードが開きます。キーボード右下の <b>🎤マイク</b> を押して話してください（iPhone標準の音声入力です）。</p>
+      <p>ホーム画面から開いたアプリでは、ブラウザ標準の音声認識が使えないため、この方法がいちばん確実です。</p></details>
+    <details><summary>📷 画像・PDFをはる</summary>
+      <p>編集画面の下の <b>📷画像</b> で写真やスクショを、<b>📎PDF</b> でPDFファイルを追加できます。複数まとめて選べます。</p>
+      <p>画像は自動で小さくして保存します。タップすると大きく表示され、PDFは別の画面で開きます。外すときは右上の ✕ を押します。</p></details>
+    <details><summary>☑️ チェックリスト</summary>
+      <p><b>☑️チェック</b> を押すと項目が1行増えます。買い物リストやToDoに便利です。左の □ を押すと完了（取り消し線）になります。一覧のカードには「☑ 1/3」のように進み具合が出ます。</p></details>
+    <details><summary>📌 ピン留め・🎨 色</summary>
+      <p>編集画面の右上の 📌 を押すと、そのメモが一覧の先頭に固定されます。タイトルの下の丸いボタンでメモの色を変えられます。</p></details>
+    <details><summary>🗑️ 消したメモをもどす</summary>
+      <p>編集画面の 🗑️ で、メモは <b>ゴミ箱</b> に入ります（すぐには消えません）。一覧の右上の 🗑️ でゴミ箱を見られます。メモを押すと「戻す」か「完全に削除」を選べます。ゴミ箱のメモは30日たつと自動で消えます。</p></details>
+    <details><summary>☁️ 自動バックアップ</summary>
+      <p>設定の「自動バックアップ」でメールアドレスとパスワード（8文字以上）を登録すると、メモを書くたびに <b>クラウドへ自動で保存</b> されます。画像とPDFも含みます。</p>
+      <p>機種変更やデータが消えたときは、同じメールアドレスでログインすれば元に戻ります。パスワードは忘れないようにしてください。</p>
+      <p>通信できないときは、あとで自動的に再試行します。「いますぐ同期」で手動でも同期できます。</p></details>
+    <details><summary>📱 ホーム画面に追加する</summary>
+      <p>iPhoneの <b>Safari</b> でこのページを開き、共有ボタン □↑ →「<b>ホーム画面に追加</b>」を選びます。アプリのように開けて、データも消えにくくなります。</p>
+      <p>Safariのタブのまま使うと、しばらく開かないとデータが消えることがあるので、必ず追加してください。</p></details>
+    <details><summary>💡 こまったとき</summary>
+      <p><b>表示がおかしい／古い</b>: アプリを一度閉じて開き直してください。</p>
+      <p><b>メモが消えた</b>: 🗑️ ゴミ箱を確認してください。自動バックアップをONにしていれば、ログインで戻せます。</p>
+      <p><b>同期できない</b>: 設定のメッセージを確認し、ネット接続を見直してください。</p></details>
+  </div>
+</section>
 
 <div id="toast" class="toast" hidden></div>
 <div id="viewer" class="viewer" hidden><button class="pill-btn" id="viewerClose">とじる ✕</button><img id="viewerImg" alt=""></div>

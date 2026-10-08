@@ -152,3 +152,20 @@ small{color:var(--sub);font-weight:600}
 .cloud-form input:focus{border-color:var(--purple);transform:scale(1.02)}
 #cloudBadge{font-size:13px;margin-left:4px}
 .sheet{max-height:92dvh;overflow-y:auto}
+
+/* ---------- つかいかた ---------- */
+.help-link{width:100%;font-size:16px;text-align:left;border-bottom:2px dotted var(--line);transition:transform .25s var(--ease-bounce),color .2s}
+@media (hover:hover){.help-link:hover{transform:translateX(6px);color:var(--pink)}}
+.help-link:active{transform:scale(.97)}
+.manual{position:fixed;inset:0;height:100dvh;background:var(--bg);z-index:35;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);animation:slideUp .35s var(--ease-bounce)}
+.manual-ttl{font-size:18px}
+.manual-body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:4px 16px calc(30px + env(safe-area-inset-bottom));max-width:640px;width:100%;margin:0 auto}
+.manual details{background:var(--card);border-radius:20px;box-shadow:var(--shadow);margin-bottom:14px;padding:0 16px;overflow:hidden;animation:fadeInUp .5s cubic-bezier(.22,1,.36,1) both}
+.manual details:nth-child(2){animation-delay:.05s}.manual details:nth-child(3){animation-delay:.1s}.manual details:nth-child(4){animation-delay:.15s}.manual details:nth-child(5){animation-delay:.2s}.manual details:nth-child(n+6){animation-delay:.25s}
+.manual summary{list-style:none;cursor:pointer;padding:16px 0;font-size:17px;display:flex;justify-content:space-between;align-items:center;transition:color .2s}
+.manual summary::-webkit-details-marker{display:none}
+.manual summary::after{content:"＋";font-size:20px;color:var(--pink);transition:transform .3s var(--ease-bounce)}
+.manual details[open] summary::after{transform:rotate(135deg)}
+@media (hover:hover){.manual summary:hover{color:var(--purple)}}
+.manual details p{margin:0 0 12px;font-size:15px;line-height:1.75;font-weight:600;color:var(--ink)}
+.manual details[open] p{animation:fadeInUp .4s ease both}
